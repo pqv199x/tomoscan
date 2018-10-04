@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { paginate } from '../helpers/utils'
+import { paginate, formatAscIIJSON } from '../helpers/utils'
 import db from '../models'
 import TokenHelper from '../helpers/token'
 
@@ -72,6 +72,28 @@ TokenController.post('/tokens/:token/updateInfo', async (req, res) => {
         await db.TokenInfo.findOneAndUpdate({ hash: hash }, body, { upsert: true, new: true })
 
         res.json({ message: 'Update successful' })
+    } catch (e) {
+        console.trace(e)
+        console.log(e)
+        return res.status(406).send()
+    }
+})
+
+TokenController.get('/tokenName', async (req, res) => {
+    try {
+        console.log(`
+        
+        
+        
+        asdasd
+        as
+        das
+        `)
+        let data = await db.Token.distinct('name')
+        // remove space
+        const a = data.map(i => formatAscIIJSON(i).trim())
+        console.log(a)
+        return res.send(a)
     } catch (e) {
         console.trace(e)
         console.log(e)

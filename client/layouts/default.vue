@@ -48,7 +48,6 @@
                             :class="(isAccounts || isContracts) ? 'active' : ''"
                             text="Accounts">
                             <b-dropdown-item :to="{name: 'accounts'}">All Accounts</b-dropdown-item>
-                            <b-dropdown-item :to="{name: 'masternodes'}">All Masternodes</b-dropdown-item>
                             <b-dropdown-item :to="{name: 'contracts'}">Verified Contracts</b-dropdown-item>
                         </b-nav-item-dropdown>
                         <b-nav-item-dropdown
@@ -125,7 +124,21 @@
                                 type="text"
                                 class="form-control search-form__input"
                                 placeholder="Search Address / TX / Block..."
-                                @keyup.enter="onGotoRoute">
+                                @keyup.enter="onGotoRoute"
+                                @input="onChange">
+                            <br>
+                            <ul
+                                v-show="isOpen"
+                                class="autocomplete-results">
+                                <li
+                                    v-for="(result, index) in results"
+                                    :key="index"
+                                    :class="{ 'is-active': i === arrowCounter }"
+                                    class="autocomplete-result"
+                                    @click="setResult(result)">
+                                    {{ result }}
+                                </li>
+                            </ul>
                         </div>
                         <div class="tomo-stat d-flex">
                             <div class="tomo-stat__item">
@@ -250,7 +263,12 @@ export default {
     data () {
         return {
             search: null,
-            stats: null
+            stats: null,
+            searchData: null,
+            aaa: [],
+            isOpen: false,
+            results: [],
+            arrowCounter: -1
         }
     },
     computed: {
@@ -277,6 +295,19 @@ export default {
             let name = this.$route.name
             return name ? name.indexOf(['index']) >= 0 : false
         }
+        // ,
+        // searcher () {
+        //     let self = this
+        //     let holder = []
+        //     let rx = new RegExp(this.search, 'i')
+        //     if (this.searchData) {
+        //         searchData.forEach((val, key) => {
+        //             if (rx.test(val)) {
+        //                 holder.push(val)
+        //             }
+        //         })
+        //     }
+        // }
     },
     watch: {
         $route (to, from) {
@@ -284,6 +315,9 @@ export default {
                 this.getStats()
             }
         }
+    },
+    async created () {
+        this.aaa = await this.getTokenName()
     },
     mounted () {
         let self = this
@@ -293,6 +327,10 @@ export default {
         if (self.isHomePage) {
             self.getStats()
         }
+        document.addEventListener('click', this.handleClickOutside)
+    },
+    destroyed () {
+        document.removeEventListener('click', this.handleClickOutside)
     },
     methods: {
 
@@ -329,6 +367,29 @@ export default {
             let self = this
             let { data } = await self.$axios.get('/api/setting')
             self.stats = data.stats
+        },
+        async getTokenName () {
+            let self = this
+            let { data } = await self.$axios.get('/api/tokenName')
+            return data
+        },
+        onChange () {
+            console.log(this.search)
+            this.isOpen = true
+            this.filterResults()
+        },
+        filterResults () {
+            this.results = this.aaa.filter(item => item.toLowerCase().indexOf(this.search.toLowerCase()) > -1)
+        },
+        setResult (result) {
+            this.search = result
+            this.isOpen = false
+        },
+        handleClickOutside (evt) {
+            if (!this.$el.contains(evt.target)) {
+               this.isOpen = false
+               this.arrowCounter = -1
+            }
         }
     }
 }
